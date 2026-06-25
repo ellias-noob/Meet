@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#0B0C10">
+  
+  <title>Turismo IA</title>
+  
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    html, body {
+      background: #0B0C10;
+      width: 100%;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+    }
+
+    /* O #app agora se adapta de forma fluida: ocupa 100% no celular, mas limita-se a um tamanho agradável no PC */
+    #app { 
+      background: #0B0C10; 
+      font-family: var(--font-sans), system-ui, -apple-system, sans-serif; 
+      color: #C5C6C7; 
+      width: 100%;
+      max-width: 500px; /* Largura máxima otimizada para Desktop / Tablets */
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    /* Adiciona uma sutil borda e sombra simulando um telefone apenas quando estiver em computadores */
+    @media (min-width: 501px) {
+      body {
+        background: #050508;
+        padding: 20px 0;
+      }
+      #app {
+        min-height: 85vh;
+        border-radius: 24px;
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6);
+        border: 1px solid #1F2833;
+      }
+    }
+
+    .neon-text { background: linear-gradient(90deg, #00FFCC, #FF00FF); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .card { background: #1F2833; border-radius: 16px; border: 1px solid #2a3540; }
+    .spinner { width: 36px; height: 36px; border: 3px solid #1F2833; border-top: 3px solid #00FFCC; border-radius: 50%; animation: spin 0.8s linear infinite; }
+    
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes pulse-cam { 0%,100% { border-color: #00FFCC22; } 50% { border-color: #00FFCC66; } }
+    @keyframes fadeIn { from { opacity:0; transform: translateY(8px); } to { opacity:1; transform: translateY(0); } }
+    .fade-in { animation: fadeIn 0.4s ease forwards; }
+    
+    input[type=text], input[type=password] { background: #0B0C10; border: 1px solid #2a3540; color: #C5C6C7; padding: 11px 14px; border-radius: 10px; width: 100%; font-size: 14px; outline: none; transition: border-color 0.2s; }
+    input[type=text]:focus, input[type=password]:focus { border-color: #00FFCC; }
+    .source-link { display: inline-flex; align-items: center; gap: 5px; background: #0B0C10; border: 1px solid #2a3540; border-radius: 6px; padding: 5px 10px; font-size: 12px; color: #00FFCC; cursor: pointer; text-decoration: none; transition: border-color 0.2s; }
+    .source-link:hover { border-color: #00FFCC; }
+
+    /* Ajustes finos de responsividade para telas extremamente estreitas (abaixo de 360px) */
+    @media (max-width: 360px) {
+      header span { font-size: 16px !important; }
+      .viewfinder-text { font-size: 12px !important; }
+      .monument-badge { font-size: 9px !important; padding: 3px 6px !important; }
+      .info-container { flex-direction: column !important; }
+      .info-fundacao { text-align: left !important; min-width: 100% !important; }
+    }
+  </style>
+</head>
+<body>
+
+<div id="app">
+
+  <header style="background: #1F2833; border-bottom: 1px solid #2a3540; padding: 14px 18px; display: flex; align-items: center; justify-content: space-between;">
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <i class="ti ti-world" style="font-size: 22px; color: #00FFCC;" aria-hidden="true"></i>
+      <span class="neon-text" style="font-size: 19px; font-weight: 500; letter-spacing: 1px;">TURISMO IA</span>
+    </div>
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <button id="btn-network" onclick="toggleNetwork()" style="background: #00CC4411; border: 1.5px solid #00CC44; color: #00CC44; padding: 5px 12px; border-radius: 20px; cursor: pointer; font-size: 11px; font-weight: 500; letter-spacing: 0.5px; transition: all 0.2s;">
+        <i class="ti ti-wifi" style="font-size: 12px; vertical-align: -1px;" aria-hidden="true"></i> ONLINE
+      </button>
+      <button onclick="openLogin()" style="background: #FF00FF11; border: 1.5px solid #FF00FF; color: #FF00FF; width: 34px; height: 34px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center;">
+        <i class="ti ti-user" style="font-size: 16px;" aria-hidden="true"></i>
+      </button>
+    </div>
+  </header>
+
+  <div style="padding: 16px; display: flex; flex-direction: column; gap: 14px; flex: 1;">
+
+    <div style="background: #0B0C10; border-radius: 16px; border: 2px solid #2a3540; animation: pulse-cam 2.5s ease-in-out infinite; overflow: hidden; position: relative;">
+      <div style="padding: 32px 20px 20px; text-align: center; position: relative;">
+        <div style="position:absolute;top:12px;left:12px;width:18px;height:18px;border-top:2px solid #00FFCC;border-left:2px solid #00FFCC;border-radius:2px 0 0 0;opacity:0.8;"></div>
+        <div style="position:absolute;top:12px;right:12px;width:18px;height:18px;border-top:2px solid #00FFCC;border-right:2px solid #00FFCC;border-radius:0 2px 0 0;opacity:0.8;"></div>
+        <div style="position:absolute;bottom:72px;left:12px;width:18px;height:18px;border-bottom:2px solid #00FFCC;border-left:2px solid #00FFCC;border-radius:0 0 0 2px;opacity:0.8;"></div>
+        <div style="position:absolute;bottom:72px;right:12px;width:18px;height:18px;border-bottom:2px solid #00FFCC;border-right:2px solid #00FFCC;border-radius:0 0 2px 0;opacity:0.8;"></div>
+        <i class="ti ti-camera" style="font-size: 52px; color: #2a3540; display: block; margin: 0 auto 10px;" aria-hidden="true"></i>
+        <p class="viewfinder-text" style="color: #4a5568; font-size: 13px; line-height: 1.6;">Aponte para um monumento<br>e toque em identificar</p>
+      </div>
+      <div style="background: #1F2833; border-top: 1px solid #2a3540; padding: 14px 20px; display: flex; align-items: center; justify-content: center; gap: 24px;">
+        <button onclick="" style="background:transparent;border:1.5px solid #2a3540;color:#6b7a8d;width:44px;height:44px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;">
+          <i class="ti ti-camera" style="font-size: 18px;" aria-hidden="true"></i>
+        </button>
+        <button onclick="identifyLocal()" style="background:linear-gradient(135deg,#00FFCC22,#FF00FF22);border:2px solid #00FFCC;color:#00FFCC;width:64px;height:64px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:2px;box-shadow:0 0 20px #00FFCC22;transition:all 0.2s;">
+          <i class="ti ti-search" style="font-size: 22px;" aria-hidden="true"></i>
+          <span style="font-size: 8px; letter-spacing: 0.5px;">IA</span>
+        </button>
+        <button onclick="" style="background:transparent;border:1.5px solid #2a3540;color:#6b7a8d;width:44px;height:44px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;">
+          <i class="ti ti-photo" style="font-size: 18px;" aria-hidden="true"></i>
+        </button>
+      </div>
+    </div>
+
+    <div id="results-panel" class="card" style="padding: 20px; min-height: 110px; display: flex; align-items: center; justify-content: center;">
+      <div style="text-align: center; padding: 10px 0;">
+        <i class="ti ti-world" style="font-size: 38px; color: #2a3540; display: block; margin: 0 auto 10px;" aria-hidden="true"></i>
+        <p style="font-size: 13px; color: #4a5568;">Nenhum local identificado ainda</p>
+        <p style="font-size: 11px; color: #2e3a47; margin-top: 4px;">Toque no botão central para começar</p>
+      </div>
+    </div>
+
+  </div>
+
+  <div id="modal-overlay" style="display:none;position:absolute;inset:0;background:rgba(11,12,16,0.93);z-index:50;align-items:center;justify-content:center;padding:24px;">
+    <div class="card fade-in" style="width:100%;max-width:340px;padding:28px;border:1px solid #00FFCC33;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;">
+        <div>
+          <p style="font-size:10px;letter-spacing:1px;color:#6b7a8d;margin-bottom:3px;">BEM-VINDO</p>
+          <span class="neon-text" style="font-size:20px;font-weight:500;">ENTRAR</span>
+        </div>
+        <button onclick="closeLogin()" style="background:#1F2833;border:1px solid #2a3540;color:#6b7a8d;width:32px;height:32px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;">
+          <i class="ti ti-x" style="font-size:16px;" aria-hidden="true"></i>
+        </button>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        <div>
+          <label style="font-size:10px;letter-spacing:1px;color:#6b7a8d;display:block;margin-bottom:6px;">USUÁRIO</label>
+          <input type="text" placeholder="seu@email.com" />
+        </div>
+        <div>
+          <label style="font-size:10px;letter-spacing:1px;color:#6b7a8d;display:block;margin-bottom:6px;">SENHA</label>
+          <input type="password" placeholder="••••••••" />
+        </div>
+        <button onclick="closeLogin()" style="background:linear-gradient(90deg,#00FFCC22,#FF00FF22);border:1.5px solid #00FFCC;color:#00FFCC;padding:12px;border-radius:10px;cursor:pointer;font-size:14px;font-weight:500;letter-spacing:1px;margin-top:4px;width:100%;">
+          ENTRAR
+        </button>
+        <div style="display:flex;justify-content:space-between;margin-top:2px;">
+          <a href="#" style="color:#6b7a8d;font-size:12px;text-decoration:none;" onclick="return false">Esqueci a senha</a>
+          <a href="#" style="color:#FF00FF;font-size:12px;text-decoration:none;" onclick="return false">Registrar-se</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+var isOnline = true;
+
+var monuments = [
+  {
+    name: "Catedral Basílica do Senhor Bom Jesus",
+    badge: "Patrimônio Histórico",
+    badgeColor: "#00FFCC",
+    lat: "-15.5989", lon: "-56.0969",
+    city: "Cuiabá, Mato Grosso",
+    year: "1722",
+    desc: "A Catedral Basílica do Senhor Bom Jesus é o principal templo católico de Cuiabá e um dos mais antigos do Centro-Oeste brasileiro. Sua construção original data de 1722, quando Cuiabá ainda era um arraial de garimpeiros. A fachada neoclássica imponente domina a Praça da República, coração histórico da cidade. Internamente, guarda imagens sacras coloniais e pinturas de grande valor artístico e religioso. Foi elevada à categoria de Basílica Menor pela Santa Sé, tornando-se referência espiritual e cultural para toda a região.",
+    curiosidade: "Dica local: visite ao entardecer para ver o reflexo dourado do sol na fachada — um espetáculo único.",
+    sources: [{ name: "Wikipedia", icon: "ti-world" }, { name: "IPHAN", icon: "ti-certificate" }, { name: "Prefeitura Cuiabá", icon: "ti-building" }]
+  },
+  {
+    name: "Museu do Morro da Caixa d'Água Velha",
+    badge: "Patrimônio Cultural",
+    badgeColor: "#FF00FF",
+    lat: "-15.5960", lon: "-56.0940",
+    city: "Cuiabá, Mato Grosso",
+    year: "1880",
+    desc: "O Morro da Caixa d'Água Velha é um dos pontos mais emblemáticos de Cuiabá, com vista panorâmica privilegiada do centro histórico. O reservatório de ferro que dá nome ao local foi construído no século XIX para abastecer a cidade e hoje integra o conjunto museológico que celebra a memória urbana cuiabana. Do alto do morro é possível avistar o rio Cuiabá, as torres da catedral e a expansão da capital mato-grossense. O espaço recebe eventos culturais e é palco privilegiado para o pôr do sol, considerado um dos mais bonitos do Brasil Central.",
+    curiosidade: "Dica local: suba à tarde e leve água — o calor de Cuiabá é intenso, mas a vista compensa cada passo.",
+    sources: [{ name: "Wikipedia", icon: "ti-world" }, { name: "Museus MT", icon: "ti-certificate" }, { name: "Cultura MT", icon: "ti-palette" }]
+  },
+  {
+    name: "Palácio Alencastro",
+    badge: "Sede do Executivo",
+    badgeColor: "#00FFCC",
+    lat: "-15.5975", lon: "-56.0958",
+    city: "Cuiabá, Mato Grosso",
+    year: "1896",
+    desc: "O Palácio Alencastro é a sede da Prefeitura Municipal de Cuiabá e um dos edifícios históricos mais importantes da cidade. Construído no final do século XIX, o palácio apresenta arquitetura eclética com traços neoclássicos que remetem à opulência do período áureo da borracha e do diamante no Centro-Oeste. Localizado no coração do centro histórico, o edifício foi restaurado e preserva painéis azulejados, madeiras nobres e mobiliário de época. É tombado pelo patrimônio histórico estadual e símbolo da administração pública cuiabana.",
+    curiosidade: "Dica local: o jardim frontal conta com árvores centenárias que oferecem sombra rara no calor cuiabano.",
+    sources: [{ name: "Wikipedia", icon: "ti-world" }, { name: "IPHAN", icon: "ti-certificate" }, { name: "Prefeitura Cuiabá", icon: "ti-building" }]
+  },
+  {
+    name: "Igreja de Nossa Senhora do Rosário e São Benedito",
+    badge: "Patrimônio Tombado",
+    badgeColor: "#FF00FF",
+    lat: "-15.5980", lon: "-56.0975",
+    city: "Cuiabá, Mato Grosso",
+    year: "1730",
+    desc: "Construída por escravizados africanos no início do século XVIII, a Igreja de Nossa Senhora do Rosário e São Benedito é um dos tempos mais antigos e emocionantes de Cuiabá. Sua arquitetura simples de adobe e pedra conta a história da fé e resistência do povo negro que ergueu Mato Grosso. O interior preserva imagens sacras barrocas e o forro de madeira original. Tombada pelo IPHAN, é palco anual das festividades do Congado, manifestação cultural afro-brasileira de grande importância para a identidade cuiabana.",
+    curiosidade: "Dica local: visite durante o Congado de São Benedito, em agosto — uma experiência cultural inesquecível.",
+    sources: [{ name: "Wikipedia", icon: "ti-world" }, { name: "IPHAN", icon: "ti-certificate" }, { name: "Cultura MT", icon: "ti-palette" }]
+  }
+];
+
+var idx = 0;
+
+function toggleNetwork() {
+  isOnline = !isOnline;
+  var btn = document.getElementById('btn-network');
+  if (isOnline) {
+    btn.style.borderColor = '#00CC44'; btn.style.color = '#00CC44'; btn.style.background = '#00CC4411';
+    btn.innerHTML = '<i class="ti ti-wifi" style="font-size:12px;vertical-align:-1px;" aria-hidden="true"></i> ONLINE';
+  } else {
+    btn.style.borderColor = '#FF4444'; btn.style.color = '#FF4444'; btn.style.background = '#FF444411';
+    btn.innerHTML = '<i class="ti ti-wifi-off" style="font-size:12px;vertical-align:-1px;" aria-hidden="true"></i> OFFLINE';
+  }
+}
+
+function openLogin() { document.getElementById('modal-overlay').style.display = 'flex'; }
+function closeLogin() { document.getElementById('modal-overlay').style.display = 'none'; }
+
+function setResults(html) {
+  var p = document.getElementById('results-panel');
+  p.style.display = 'block';
+  p.style.alignItems = 'unset';
+  p.style.justifyContent = 'unset';
+  p.innerHTML = html;
+  p.classList.remove('fade-in');
+  void p.offsetWidth;
+  p.classList.add('fade-in');
+}
+
+function identifyLocal() {
+  var p = document.getElementById('results-panel');
+  p.style.display = 'flex';
+  p.style.alignItems = 'center';
+  p.style.justifyContent = 'center';
+  p.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;gap:12px;padding:28px 0;"><div class="spinner"></div><p style="color:#6b7a8d;font-size:12px;letter-spacing:1px;">ANALISANDO VIA IA...</p></div>';
+
+  setTimeout(function() {
+    if (!isOnline) {
+      setResults(renderError());
+    } else {
+      var m = monuments[idx % monuments.length];
+      idx++;
+      setResults(renderMonument(m));
+    }
+  }, 1600);
+}
+
+function renderError() {
+  return '<div style="border:2px solid #FF4444;background:#FF000011;border-radius:12px;padding:28px;text-align:center;">' +
+    '<i class="ti ti-alert-triangle" style="font-size:42px;color:#FF4444;display:block;margin:0 auto 12px;" aria-hidden="true"></i>' +
+    '<p style="color:#FF4444;font-size:17px;font-weight:500;letter-spacing:2px;">⚠️ ISSO NÃO EXISTE</p>' +
+    '<p style="color:#6b7a8d;font-size:12px;margin-top:8px;">Nenhum monumento identificado.<br>Verifique a imagem ou reconecte-se.</p>' +
+    '</div>';
+}
+
+function renderMonument(m) {
+  var src = m.sources.map(function(s) {
+    return '<a class="source-link" href="#" onclick="return false"><i class="ti ' + s.icon + '" style="font-size:13px;" aria-hidden="true"></i>' + s.name + '</a>';
+  }).join('');
+
+  return '<div style="display:flex;flex-direction:column;gap:12px;">' +
+
+    '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;flex-wrap:wrap;">' +
+      '<div style="flex:1; min-width:180px;">' +
+        '<p style="font-size:10px;letter-spacing:1px;color:#6b7a8d;margin-bottom:4px;">LOCAL IDENTIFICADO</p>' +
+        '<h2 style="font-size:19px;font-weight:500;background:linear-gradient(90deg,#00FFCC,#FF00FF);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1.3;">' + m.name + '</h2>' +
+      '</div>' +
+      '<span class="monument-badge" style="font-size:10px;padding:4px 9px;border-radius:20px;background:' + m.badgeColor + '18;color:' + m.badgeColor + ';border:1px solid ' + m.badgeColor + '44;white-space:nowrap;flex-shrink:0;margin-top:4px;">' + m.badge + '</span>' +
+    '</div>' +
+
+    '<div class="info-container" style="display:flex;gap:8px;width:100%;">' +
+      '<div style="background:#0B0C10;border:1px solid #2a3540;border-radius:10px;padding:10px 12px;flex:1;">' +
+        '<p style="font-size:10px;letter-spacing:1px;color:#6b7a8d;margin-bottom:4px;">LOCALIZAÇÃO</p>' +
+        '<p style="font-size:12px;color:#C5C6C7;word-break:break-all;"><i class="ti ti-map-pin" style="font-size:12px;color:#FF00FF;vertical-align:-1px;" aria-hidden="true"></i> ' + m.lat + ', ' + m.lon + '</p>' +
+        '<p style="font-size:11px;color:#4a5568;margin-top:2px;">' + m.city + '</p>' +
+      '</div>' +
+      '<div class="info-fundacao" style="background:#0B0C10;border:1px solid #2a3540;border-radius:10px;padding:10px 12px;text-align:center;min-width:75px;">' +
+        '<p style="font-size:10px;letter-spacing:1px;color:#6b7a8d;margin-bottom:4px;">FUNDAÇÃO</p>' +
+        '<p style="font-size:14px;color:#00FFCC;font-weight:500;">' + m.year + '</p>' +
+      '</div>' +
+    '</div>' +
+
+    '<div style="background:#0B0C10;border:1px solid #2a3540;border-radius:10px;padding:14px;">' +
+      '<p style="font-size:10px;letter-spacing:1px;color:#6b7a8d;margin-bottom:8px;">HISTÓRIA</p>' +
+      '<p style="font-size:13px;color:#9ea8b5;line-height:1.75;">' + m.desc + '</p>' +
+    '</div>' +
+
+    '<div style="background:#00FFCC08;border:1px solid #00FFCC22;border-radius:10px;padding:12px;display:flex;gap:10px;align-items:flex-start;">' +
+      '<i class="ti ti-bulb" style="font-size:18px;color:#00FFCC;flex-shrink:0;margin-top:1px;" aria-hidden="true"></i>' +
+      '<p style="font-size:12px;color:#7ecfc0;line-height:1.6;">' + m.curiosidade + '</p>' +
+    '</div>' +
+
+    '<div>' +
+      '<p style="font-size:10px;letter-spacing:1px;color:#6b7a8d;margin-bottom:8px;">FONTES OFICIAIS</p>' +
+      '<div style="display:flex;flex-wrap:wrap;gap:7px;">' + src + '</div>' +
+    '</div>' +
+
+    '</div>';
+}
+</script>
+</body>
+</html>
